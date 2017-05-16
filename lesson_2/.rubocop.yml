@@ -204,9 +204,6 @@ Style/SymbolArray:
   StyleGuide: '#percent-i'
   Enabled: false
 
-Style/Tab:
-  Enabled: false
-
 Style/WhileUntilModifier:
   Description: Favor modifier while/until usage when you have a single-line body.
   Enabled: false
