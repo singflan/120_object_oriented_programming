@@ -35,10 +35,11 @@ class Move
 end
 
 class Player
-  attr_accessor :move, :name
+  attr_accessor :move, :name, :score
 
   def initialize
     set_name
+    @score = 0
   end
 end
 
@@ -103,6 +104,18 @@ class RPSGame
     end
   end
 
+  def update_score
+    if human.move > computer.move
+      human.score += 1
+    elsif human.move < computer.move
+      computer.score += 1
+    end
+  end
+
+  def display_score
+    puts "Current Standings --> #{human.name}: #{human.score}, #{computer.name}: #{computer.score}"
+  end
+
   def display_goodbye_message
     puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
   end
@@ -123,10 +136,18 @@ class RPSGame
   def play
     display_welcome_message
     loop do
-      human.choose
-      computer.choose
-      display_winner
+      loop do 
+        human.choose
+        computer.choose
+        display_moves
+        update_score
+        display_winner
+        display_score
+        break if human.score == 10 || computer.score == 10
+      end
       break unless play_again?
+      human.score = 0
+      computer.score = 0
     end
     display_goodbye_message
   end
