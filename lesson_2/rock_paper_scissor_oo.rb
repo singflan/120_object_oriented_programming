@@ -5,46 +5,7 @@ WINNING_SCORE = 10
 class Move
   VALUES = ['rock', 'paper', 'scissors', 'lizard', 'spock']
 
-  # def initialize(value)
-  #   @value = value
-  # end
-
-  # def scissors?
-  #   @value == 'scissors'
-  # end
-
-  # def rock?
-  #   @value == 'rock'
-  # end
-
-  # def paper?
-  #   @value == 'paper'
-  # end
-
-  # def lizard?
-  #   @value == 'lizard'
-  # end
-
-  # def spock?
-  #   @value == 'spock'
-  # end
   attr_accessor :value
-
-  # def >(other_move)
-  #   (rock? && (other_move.scissors? || other_move.lizard?)) ||
-  #     (paper? && (other_move.rock? || other_move.spock?)) ||
-  #     (scissors? && (other_move.paper? || other_move.lizard?)) ||
-  #     (lizard? && (other_move.spock? || other_move.paper?)) ||
-  #     (spock? && (other_move.scissors? || other_move.rock?))  
-  # end
-
-  # def <(other_move)
-  #   (rock? && (other_move.paper? || other_move.spock?)) ||
-  #     (paper? && (other_move.scissors? || other_move.lizard?)) ||
-  #     (scissors? && (other_move.rock? || other_move.spock?)) ||
-  #     (lizard? && (other_move.rock? || other_move.scissors?)) ||
-  #     (spock? && (other_move.lizard? || other_move.paper?))
-  # end
 
   def to_s
     @value
@@ -122,15 +83,25 @@ class Spock < Move
 end
 
 class Player
-  attr_accessor :move, :name, :score
+  attr_accessor :move, :name, :score, :move_history
 
   def initialize
     set_name
     @score = 0
+    @move_history = {}
+    # @moves_count = {}
   end
 
-  def assign(choice)
-    
+  def get_move_percentage(moves)
+    total = moves.size
+    moves_count = { rock: moves.count('rock'), paper: moves.count('paper'), 
+                    scissors: moves.count('scissors'), lizard: moves.count('lizard'), 
+                    spock: moves.count('spock') 
+                  }
+    moves_percentage = moves_count.map do |k, v|
+       (v.to_f / total.to_f) 
+    end
+    # moves_percentage
   end
 end
 
@@ -165,7 +136,7 @@ class Human < Player
     when 'lizard'
       self.move = Lizard.new
     when 'spock'
-      self.move == Spock.new
+      self.move = Spock.new
     end  
   end
 end
@@ -173,6 +144,10 @@ end
 class Computer < Player
   def set_name
     self.name = ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
+  end
+
+  def apply_rule
+
   end
 
   def choose
@@ -188,20 +163,13 @@ class Computer < Player
     when 'lizard'
       self.move = Lizard.new
     when 'spock'
-      self.move == Spock.new
-    end    # case choice
-    # when 'rock'
-    #   self.move = Rock.new
-    # when 'scissors'
-    #   self.move = Scissors.new
-    # when 'paper'
-    #   self.move = Paper.new
-    # when 'lizard'
-    #   self.move = Lizard.new
-    # when 'spock'
-    #   self.move == Spock.new
-    # end
+      self.move = Spock.new
+    end   
   end
+end
+
+class Rule
+
 end
 
 class RPSGame
@@ -237,6 +205,9 @@ class RPSGame
     elsif human.move < computer.move
       computer.score += 1
     end
+
+    human.move_history.push(human.move.value)
+    computer.move_history.push(computer.move.value)
   end
 
   def display_score
@@ -245,6 +216,22 @@ class RPSGame
 
   def display_goodbye_message
     puts "Thanks for playing Rock, Paper, Scissors, Lizard, Spock. Good bye!"
+  end
+
+  def view_moves?
+    answer = nil
+    loop do
+      puts "Would you like to view each player's move history? (y/n)"
+      answer = gets.chomp.downcase
+      break if ['y', 'n'].include? answer
+      puts "Sorry, must be y or no."
+    end
+
+    if answer == 'y'
+      puts "#{human.name}'s moves: #{human.move_history}"
+      puts "#{computer.name}'s moves: #{computer.move_history}"
+      puts "#{human.get_move_percentage(human.move_history)} #{computer.get_move_percentage(computer.move_history)}"
+    end
   end
 
   def play_again?
@@ -270,6 +257,7 @@ class RPSGame
         update_score
         display_winner
         display_score
+        view_moves?
         break if human.score == WINNING_SCORE || computer.score == WINNING_SCORE
       end
       break unless play_again?
