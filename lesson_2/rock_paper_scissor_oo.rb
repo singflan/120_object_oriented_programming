@@ -83,25 +83,55 @@ class Spock < Move
 end
 
 class Player
-  attr_accessor :move, :name, :score, :move_history
+  attr_accessor :move, :name, :score, :move_history, :rule
 
   def initialize
     set_name
     @score = 0
-    @move_history = {}
+    @move_history = []
     # @moves_count = {}
+  end
+
+  def get_move_count(moves)
+    move_count = { 'rock' => 0, 'paper' => 0, 'scissors' => 0, 'lizard' => 0, 'spock' => 0 }
+    moves.each do |round|
+     round
+      round.each do |move, result|
+        move_count[move] += 1 if move 
+      end
+    end
+    move_count
   end
 
   def get_move_percentage(moves)
     total = moves.size
-    moves_count = { rock: moves.count('rock'), paper: moves.count('paper'), 
-                    scissors: moves.count('scissors'), lizard: moves.count('lizard'), 
-                    spock: moves.count('spock') 
-                  }
-    moves_percentage = moves_count.map do |k, v|
+    move_count = get_move_count(moves)
+    move_percentage = move_count.map do |k, v|
        (v.to_f / total.to_f) 
     end
-    # moves_percentage
+  end
+
+  def get_win_total_and_count_per_move(moves)
+    move_win_results = { 'rock' => [0, 0], 'paper' => [0, 0], 
+                            'scissors' => [0, 0], 'lizard' => [0, 0], 'spock' => [0, 0] }
+    moves.each do |round|
+      round.each do |move, result|
+        move_win_results[move][0] += 1 if move
+        move_win_results[move][1] += 1 if result == :win
+      end
+    end
+    move_win_results
+  end
+
+  def get_move_win_percentage_per_move(moves)
+    # total = moves.size
+    win_percentage_per_move_hash = { 'rock' => 0.0, 'paper' => 0.0, 'scissors' => 0.0, 'lizard' => 0.0, 'spock' => 0.0 }
+    win_total_per_move = get_win_total_and_count_per_move(moves)
+    win_total_per_move.each do |move, results|
+      win_percentage_per_move_hash[move] = results[1].to_f / results[0].to_f
+    end
+    
+    win_percentage_per_move_hash
   end
 end
 
@@ -153,6 +183,7 @@ class Computer < Player
   def choose
     #self.move = Move.new(Move::VALUES.sample)
     choice = Move::VALUES.sample
+    apply_rule
     case choice
     when 'rock'
       self.move = Rock.new
@@ -169,7 +200,10 @@ class Computer < Player
 end
 
 class Rule
+  def lower_10_percent_if_60_percent_lose(move_history)
+    if 
 
+  end
 end
 
 class RPSGame
@@ -200,14 +234,19 @@ class RPSGame
   end
 
   def update_score
+    result = nil
     if human.move > computer.move
       human.score += 1
+      human.move_history.push( {human.move.value => :win} )
+      computer.move_history.push( {computer.move.value => :loss} )
     elsif human.move < computer.move
       computer.score += 1
-    end
-
-    human.move_history.push(human.move.value)
-    computer.move_history.push(computer.move.value)
+      human.move_history.push( {human.move.value => :loss} )
+      computer.move_history.push( {computer.move.value => :win} )
+    else
+      human.move_history.push( {human.move.value => :tie} )
+      computer.move_history.push( {computer.move.value => :tie} )
+    end    
   end
 
   def display_score
@@ -232,6 +271,7 @@ class RPSGame
       puts "#{computer.name}'s moves: #{computer.move_history}"
       puts "#{human.get_move_percentage(human.move_history)} #{computer.get_move_percentage(computer.move_history)}"
     end
+    puts human.get_move_win_percentage_per_move(human.move_history)
   end
 
   def play_again?
