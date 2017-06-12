@@ -10,6 +10,10 @@ class Board
     reset
   end
 
+  def get_marker_at_square(num)
+    @squares[num].marker
+  end
+
   def []=(num, marker)
     @squares[num].marker = marker
   end
@@ -38,36 +42,20 @@ class Board
   end
 
   def find_at_risk_square(marker)
-    # square = nil
-    WINNING_LINES.each do |line|
-      squares = @squares.values_at(*line)
-      # square = find_at_risk_square(squares, line, marker)
-      # break if square
-      # two_identical_markers?(squares)
+    square = nil
+    WINNING_LINES.each do |line|     
       count = 0
-      squares.each do |square|
-        if square.marker == marker 
-          count += 1
-        end
+
+      @squares.values_at(*line).each do |square|
+        count += 1 if square.marker == marker 
       end
 
-      if count(marker) == 2
-        board.select{|k,v| line.include?(k) && v == ' '}.keys.first
-      else
-        nil
+      if count == 2
+        square = @squares.select{|num, square| line.include?(num) && square.marker == ' '}.keys.first
       end
     end
-    # square
+    square
   end
-
-  # def find_at_risk_square(squares, line, marker)
-  #   if squares.values_at(*line).count(marker) == 2
-  #     binding.pry
-  #     board.select{|k,v| line.include?(k) && v == ' '}.keys.first
-  #   else
-  #     nil
-  #   end
-  # end
 
   def reset
     (1..9).each { |key| @squares[key] = Square.new }
@@ -94,12 +82,6 @@ class Board
   def three_identical_markers?(squares)
     markers = squares.select(&:marked?).collect(&:marker)
     return false if markers.size != 3
-    markers.min == markers.max
-  end
-
-  def two_identical_markers?(squares)
-    markers = squares.select(&:marked?).collect(&:marker)
-    return false if markers.size != 2
     markers.min == markers.max
   end
 
@@ -146,7 +128,7 @@ end
 class TTTGame
   HUMAN_MARKER = 'X'
   COMPUTER_MARKER = 'O'
-  FIRST_TO_MOVE = HUMAN_MARKER
+  FIRST_TO_MOVE = 'CHOOSE' # optiones are HUMAN_MARKER, COMPUTER_MARKER, or CHOOSE
   WINNING_SCORE = 5
 
   attr_reader :board, :human, :computer
@@ -161,6 +143,7 @@ class TTTGame
   def play
     clear
     display_welcome_message
+    ask_and_set_first_player if FIRST_TO_MOVE == 'CHOOSE'
 
     loop do
       reset_scores
@@ -196,6 +179,22 @@ class TTTGame
   def display_welcome_message
     puts 'Welcome to Tic Tac Toe!'
     puts ''
+  end
+
+  def ask_and_set_first_player
+    answer = nil
+    loop do
+      puts "Who would you like to go first: ('h' for human, 'c' for computer)"
+      answer = gets.chomp.downcase
+      break if %w(h c).include? answer
+      puts 'Sorry, must be y'
+    end
+
+    if answer == 'c'
+      @current_marker = COMPUTER_MARKER
+    elsif answer == 'h'
+      @current_marker = HUMAN_MARKER
+    end
   end
 
   def display_goodbye_message
@@ -244,12 +243,24 @@ class TTTGame
 
   def computer_moves
     square = nil
-    square = board.find_at_risk_square(HUMAN_MARKER)
-  
-    if !square
-      square = board.unmarked_keys.sample
+    # defense
+    square = board.find_at_risk_square(COMPUTER_MARKER)
+
+    # offense
+    if !square 
+      square = board.find_at_risk_square(HUMAN_MARKER)
     end
-    binding.pry
+
+    if !square
+      # pick square 5 if available
+      if board.get_marker_at_square(5) == ' '
+        square = 5
+      else
+      # pick a square at random
+        square = board.unmarked_keys.sample 
+      end
+    end
+
     board[square] = computer.marker
   end
 
@@ -304,7 +315,7 @@ class TTTGame
   def ready_for_new_game?
     answer = nil
     loop do
-      puts "Are you ready for the next game? (Press 'y' when ready?)"
+      puts "Are you ready for the next game? (Press 'y' when ready)"
       answer = gets.chomp.downcase
       break if %w(y).include? answer
       puts 'Sorry, must be y'
