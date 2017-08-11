@@ -11,11 +11,7 @@ class CircularQueue
 
   def enqueue(object)
     if @circ_queue[@youngest_index_value] != nil
-      if @oldest_index_value < (@SIZE - 1)
-        @oldest_index_value += 1
-      else
-        @oldest_index_value = 0
-      end
+      advance_oldest_index
     end
     @circ_queue[@youngest_index_value] = object
       if @youngest_index_value < (@SIZE - 1)
@@ -29,18 +25,19 @@ class CircularQueue
     removed_object = @circ_queue[@oldest_index_value]
     @circ_queue[@oldest_index_value] = nil
     if removed_object != nil
-      if @oldest_index_value < (@SIZE - 1)
-        @oldest_index_value += 1
-      else
-        @oldest_index_value = 0
-      end
+      advance_oldest_index
     end
     removed_object
   end
 
-  private
-  def advance_index(pointer)
+  protected
 
+  def advance_oldest_index
+    if @oldest_index_value < (@SIZE - 1)
+      @oldest_index_value += 1
+    else
+      @oldest_index_value = 0
+    end
   end
 end
 

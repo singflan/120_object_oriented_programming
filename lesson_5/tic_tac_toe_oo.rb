@@ -110,7 +110,8 @@ class Square
 end
 
 class Player
-  attr_reader :marker, :score, :name
+  attr_reader :score
+  attr_accessor :marker, :name
 
   def initialize(marker)
     @marker = marker
@@ -126,7 +127,7 @@ class Player
 end
 
 class TTTGame
-  HUMAN_MARKER = 'X'
+  HUMAN_DEFAULT_MARKER = 'X'
   COMPUTER_MARKER = 'O'
   FIRST_TO_MOVE = 'CHOOSE' # optiones are HUMAN_MARKER, COMPUTER_MARKER, or CHOOSE
   WINNING_SCORE = 5
@@ -135,15 +136,17 @@ class TTTGame
 
   def initialize
     @board = Board.new
-    @human = Player.new(HUMAN_MARKER)
+    @human = Player.new(HUMAN_DEFAULT_MARKER)
     @computer = Player.new(COMPUTER_MARKER)
-    @current_marker = FIRST_TO_MOVE
+    @current_marker = human.marker
   end
 
   def play
     clear
     display_welcome_message
+    player_choose_marker
     ask_and_set_first_player if FIRST_TO_MOVE == 'CHOOSE'
+    set_player_names
 
     loop do
       reset_scores
@@ -193,8 +196,28 @@ class TTTGame
     if answer == 'c'
       @current_marker = COMPUTER_MARKER
     elsif answer == 'h'
-      @current_marker = HUMAN_MARKER
+      @current_marker = human.marker
     end
+  end
+
+  def player_choose_marker
+    answer = nil
+    loop do 
+      puts "Please choose your marker (enter any letter or symbol): "
+      answer = gets.chomp
+      break if answer.size == 1
+      puts "Marker can only be 1 character, not more or nothing"
+    end
+
+    human.marker = answer
+  end
+
+  def set_player_names
+    puts "What is your name? "
+    human.name = gets.chomp
+
+    puts "What is the computer's name? "
+    computer.name = gets.chomp
   end
 
   def display_goodbye_message
@@ -207,7 +230,7 @@ class TTTGame
   end
 
   def display_board
-    puts "You're a #{human.marker}. Computer is a #{computer.marker}."
+    puts "#{human.name} is a #{human.marker}. #{computer.name} is a #{computer.marker}."
     puts ''
     board.draw
     puts ''
@@ -248,7 +271,7 @@ class TTTGame
 
     # offense
     if !square 
-      square = board.find_at_risk_square(HUMAN_MARKER)
+      square = board.find_at_risk_square(human.marker)
     end
 
     if !square
@@ -265,19 +288,19 @@ class TTTGame
   end
 
   def current_player_moves
-    if @current_marker == HUMAN_MARKER
+    if @current_marker == human.marker
       human_moves
       @current_marker = COMPUTER_MARKER
     else
       computer_moves
-      @current_marker = HUMAN_MARKER
+      @current_marker = human.marker
     end
   end
 
   def determine_winner_and_update_score
     if board.winning_marker == COMPUTER_MARKER
       computer.increase_score
-    elsif board.winning_marker == HUMAN_MARKER
+    elsif board.winning_marker == human.marker
       human.increase_score
     end
   end
@@ -287,16 +310,16 @@ class TTTGame
 
     case board.winning_marker
     when human.marker
-      puts 'You won!'
+      puts "#{human.name} won!"
     when computer.marker
-      puts 'Computer won!'
+      puts "#{computer.name} won!"
     else
       puts "It's a tie!"
     end
   end
 
   def display_scoreboard
-    puts "Human: #{human.score}, Computer: #{computer.score}"
+    puts "#{human.name}: #{human.score}, #{computer.name}: #{computer.score}"
   end
 
   def winning_total_reached?
@@ -342,7 +365,7 @@ class TTTGame
 
   def reset
     board.reset
-    @current_marker = FIRST_TO_MOVE
+    # @current_marker = FIRST_TO_MOVE
     clear
   end
 
